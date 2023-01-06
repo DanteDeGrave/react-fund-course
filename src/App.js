@@ -1,23 +1,69 @@
-import logo from './logo.svg';
-import './App.css';
+import React, {useMemo, useState} from "react";
+import '../src/styles/App.css';
+import PostList from "./components/PostList";
+import PostForm from "./components/PostForm";
+import MySelect from "./components/UI/select/MySelect";
+import MyInput from "./components/UI/input/MyInput";
 
 function App() {
+
+  const [posts, setPosts] = useState([
+    {id: 1, title: 'JavaScript', body: 'Description'},
+    {id: 2, title: 'JavaScript 2', body: 'Description'},
+    {id: 3, title: 'JavaScript 3', body: 'Description'},
+  ]);
+
+  const options = [
+    {value: 'title', name: 'По названию'},
+    {value: 'body', name: 'По описанию'},
+  ]
+
+  const [selectedSort, setSelectedSort] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const sortedPosts = useMemo(() => {
+    if (selectedSort) {
+      return [...posts].sort((postA, postB) => postA[selectedSort].localeCompare(postB[selectedSort]));
+    }
+    return posts;
+  }, [selectedSort, posts]);
+
+  const sortedAndSearchedPosts = useMemo(() => {
+    return sortedPosts.filter(post => post.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [searchQuery, sortedPosts]);
+
+  const createPost = (newPost) => {
+    setPosts([...posts, newPost])
+  }
+
+  const removePost = (post) => {
+    setPosts(posts.filter(p => p.id !== post.id));
+  }
+
+  const sortPosts = (sort) => {
+    setSelectedSort(sort);
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <PostForm create={createPost}/>
+      <hr style={{margin: '15px 0'}}/>
+      <MyInput
+        placeholder='Поиск...'
+        value={searchQuery}
+        onChange={e => setSearchQuery(e.target.value)}
+      />
+      <MySelect
+        value={selectedSort}
+        onChange={sortPosts}
+        defaultValue='Сортировать:'
+        options={options}
+      />
+      {
+        sortedAndSearchedPosts.length ?
+          <PostList remove={removePost} posts={sortedAndSearchedPosts} title={'Посты про JS'}/> :
+          <h1 style={{textAlign: 'center'}}>Посты не найдены !</h1>
+      }
     </div>
   );
 }
